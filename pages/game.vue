@@ -90,7 +90,7 @@ div(
           v-for="(score, index) in item.scores"
         )
           td(
-            :class="{ 'bg-yellow-darken-1' : (item.mahjongNumber[index] === 1), 'bg-grey-lighten-2' : (item.mahjongNumber[index] === 2), 'bg-orange-accent-3' : (item.mahjongNumber[index] === 3) }"
+            :class="{ 'bg-yellow-lighten-4' : (item.mahjongNumber[index] === 1), 'bg-grey-lighten-4' : (item.mahjongNumber[index] === 2), 'bg-orange-lighten-3' : (item.mahjongNumber[index] === 3) }"
           )
             template(
               v-for="(detail, index) in score.detail"
@@ -105,7 +105,7 @@ div(
           v-for="(score, index) in item.scores"
         )
           td(
-            :class="{ 'bg-yellow-darken-1' : (item.mahjongNumber[index] === 1), 'bg-grey-lighten-2' : (item.mahjongNumber[index] === 2), 'bg-orange-accent-3' : (item.mahjongNumber[index] === 3) }"
+            :class="{ 'bg-yellow-lighten-4' : (item.mahjongNumber[index] === 1), 'bg-grey-lighten-4' : (item.mahjongNumber[index] === 2), 'bg-orange-lighten-3' : (item.mahjongNumber[index] === 3) }"
           )
             v-chip(
               :color="score.total > 0 ? 'success' : score.total < 0 ? 'error': ''"
