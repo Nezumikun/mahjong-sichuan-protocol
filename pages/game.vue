@@ -193,7 +193,8 @@ v-dialog(
             detail: []
           })
         }
-        this.gameState.rounds.push(item)
+        this.gameState.rounds.unshift(item)
+        this.gameState.mahjongCount = 0
         this.displaySettings.roundInProggress = true
       },
       reset () {
@@ -202,7 +203,7 @@ v-dialog(
         this.displaySettings.needInitPlayer = true
       },
       displayMahjongDialog() {
-        const currentRound = this.gameState.rounds.at(-1)
+        const currentRound = this.gameState.rounds.at(0)
         this.displaySettings.items = []
         for (let key in this.gameState.players) {
           if (currentRound.inGame[key]) {
@@ -221,16 +222,18 @@ v-dialog(
         this.displaySettings.mahjong = false
         this.gameState.mahjongCount++
         const winner = this.displaySettings.mahjongPlayer
-        const currentRound = this.gameState.rounds.at(-1)
+        const currentRound = this.gameState.rounds.at(0)
         currentRound.inGame[winner] = false
         currentRound.mahjongNumber[winner] = this.gameState.mahjongCount
         if (this.gameState.mahjongCount === 3) {
           this.displaySettings.roundInProggress = false
+          this.newRound()
         }
       },
       endOfWall () {
         this.gameState.endOfWall = true
         this.displaySettings.roundInProggress = false
+        this.newRound()
       }
     }
   }
