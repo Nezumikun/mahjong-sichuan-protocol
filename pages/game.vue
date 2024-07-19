@@ -92,12 +92,9 @@ div(
           td(
             :class="{ 'bg-yellow-lighten-4' : (item.mahjongNumber[index] === 1), 'bg-grey-lighten-4' : (item.mahjongNumber[index] === 2), 'bg-orange-lighten-3' : (item.mahjongNumber[index] === 3) }"
           )
-            template(
-              v-for="(detail, index) in score.detail"
-            )
-              v-chip(
-                :color="detail.score > 0 ? 'success' : 'error'"
-              ) {{ Math.abs(detail.score) }}
+            v-chip(
+              :color="score.total > 0 ? 'success' : score.total < 0 ? 'error': ''"
+            ) {{ score.total }}
       tr(
         align="center"
       )
@@ -107,9 +104,12 @@ div(
           td(
             :class="{ 'bg-yellow-lighten-4' : (item.mahjongNumber[index] === 1), 'bg-grey-lighten-4' : (item.mahjongNumber[index] === 2), 'bg-orange-lighten-3' : (item.mahjongNumber[index] === 3) }"
           )
-            v-chip(
-              :color="score.total > 0 ? 'success' : score.total < 0 ? 'error': ''"
-            ) {{ score.total }}
+            template(
+              v-for="(detail, index) in score.detail"
+            )
+              v-chip(
+                :color="detail.score > 0 ? 'success' : 'error'"
+              ) {{ Math.abs(detail.score) }}
         <!--td {{ item  }}-->
   v-btn(
     class="mt-4"
@@ -310,34 +310,52 @@ v-dialog(
         currentRound.inGame[winner] = false
         currentRound.mahjongNumber[winner] = this.gameState.mahjongCount
         if (this.gameState.mahjongCount === 3) {
-          this.displaySettings.roundInProggress = false
-          this.newRound()
+          this.endOfRound()
         }
       },
       kong () {
         this.displaySettings.kong = false
         const winner = this.displaySettings.kongPlayer
         const currentRound = this.gameState.rounds[0]
-        if (this.displaySettings.kongFrom === "-2") {
+        const kongType = 1 * this.displaySettings.kongFrom
+        if (kongType < 0) {
+          const type = kongType === -2 ? 'concealed kong' : 'melded kong'
+          const price = -kongType
           const loosers = this.getActivePlayers(winner)
-          currentRound.scores[winner].total += 2 * loosers.length
+          currentRound.scores[winner].total += price * loosers.length
           currentRound.scores[winner].detail.push({
-             score: 2 * loosers.length,
-             type: 'kong',
+             score: price * loosers.length,
+             type: type,
              source: loosers
           })
           for (let looser of loosers) {
-            currentRound.scores[looser.value].total -= 2
+            currentRound.scores[looser.value].total -= price
             currentRound.scores[looser.value].detail.push({
-              score: -2,
-              type: 'kong',
+              score: -price,
+              type: type,
               destination: winner
             })
           }
+        } else {
+          currentRound.scores[winner].total += 2
+          currentRound.scores[winner].detail.push({
+             score: 2,
+             type: 'kong',
+             source: kongType
+          })
+          currentRound.scores[kongType].total -= 2
+          currentRound.scores[kongType].detail.push({
+            score: -2,
+            type: 'kong',
+            destination: winner
+          })
         }
       },
       endOfWall () {
         this.gameState.endOfWall = true
+        this.endOfRound()
+      },
+      endOfRound() {
         this.displaySettings.roundInProggress = false
         this.newRound()
       }
