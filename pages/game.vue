@@ -51,24 +51,27 @@ v-sheet(
 div(
   v-if="!displaySettings.needInitPlayer"
 )
-  v-btn(
-    class="mt-4"
-    color="success"
-    block
-    @click="reset"
-  ) Маджонг
-  v-btn(
-    class="mt-4"
-    color="warning"
-    block
-    @click="reset"
-  ) Конг
-  v-btn(
-    class="mt-4"
-    color="error"
-    block
-    @click="reset"
-  ) Закончилась стена
+  div(
+    v-if="displaySettings.roundInProggress"
+  )
+    v-btn(
+      class="mt-4"
+      color="success"
+      block
+      @click="displayMahjongDialog"
+    ) Маджонг {{ gameState.mahjongCount + 1 }}
+    v-btn(
+      class="mt-4"
+      color="warning"
+      block
+      @click="reset"
+    ) Конг
+    v-btn(
+      class="mt-4"
+      color="error"
+      block
+      @click="endOfWall"
+    ) Закончилась стена
   v-data-table(
     :headers="displaySettings.headers"
     :items="gameState.rounds"
@@ -76,12 +79,58 @@ div(
     items-per-page="-1"
     hide-default-footer
   )
+    template(
+      v-slot:item="{item}"
+    )
+      tr(
+        align="center"
+      )
+        td {{ item.number }}
+        td {{ item.scores[0].total }}
+        td {{ item.scores[1].total }}
+        td {{ item.scores[2].total }}
+        td {{ item.scores[3].total }}
+        <!--td {{ item  }}-->
   v-btn(
     class="mt-4"
     color="error"
     block
     @click="reset"
-  ) Отмена
+  ) Прервать игру
+
+v-dialog(
+  width="auto"
+  v-model="displaySettings.mahjong"
+)
+  v-card
+    v-card-title Маджонг {{ gameState.mahjongCount + 1 }}
+    v-card-subtitle Кто объявил маджонг?
+    v-card-text
+      v-form
+        v-radio-group(
+          v-model="displaySettings.mahjongPlayer"
+        )
+          template(
+            v-for="item in displaySettings.items"
+          )
+            v-radio(
+              :label="item.key"
+              :value="item.value"
+            )
+    v-card-actions
+      v-btn(
+        text="Ok"
+        color="success"
+        variant="tonal"
+        :disabled="displaySettings.mahjongPlayer === -1"
+        @click="mahjong"
+      )
+      v-btn(
+        text="Отмена"
+        color="error"
+        variant="tonal"
+        @click="displaySettings.mahjong = false"
+      )
 </template>
 
 <script>
@@ -89,10 +138,16 @@ div(
     data: () => ({
       gameState: {
         players: [ '', '', '', '' ],
-        rounds: []
+        rounds: [],
+        mahjongCount: 0,
+        endOfWall: false
       },
       displaySettings: {
         needInitPlayer: true,
+        roundInProggress: false,
+        mahjong: false,
+        mahjongPlayer: -1,
+        items: [],
         headers: []
       },
       formInitPlayers: {
@@ -102,8 +157,12 @@ div(
     }),
     methods: {
       initPlayers () {
-        this.gameState.players = []
-        this.gameState.rounds = []
+        this.gameState = {
+          players: [],
+          rounds: [],
+          mahjongCount: 0,
+          endOfWall: false
+        }
         if (this.formInitPlayers.random) {
           const temp = this.formInitPlayers.players.sort(() => Math.random() - 0.5).sort(() => Math.random() - 0.5).sort(() => Math.random() - 0.5).sort(() => Math.random() - 0.5).sort(() => Math.random() - 0.5)
           console.log(temp)
@@ -135,11 +194,43 @@ div(
           })
         }
         this.gameState.rounds.push(item)
+        this.displaySettings.roundInProggress = true
       },
       reset () {
         this.formInitPlayers.players = [ 'Восток', 'Юг', 'Запад', 'Север']
         this.formInitPlayers.random = false
         this.displaySettings.needInitPlayer = true
+      },
+      displayMahjongDialog() {
+        const currentRound = this.gameState.rounds.at(-1)
+        this.displaySettings.items = []
+        for (let key in this.gameState.players) {
+          if (currentRound.inGame[key]) {
+            this.displaySettings.items.push(
+              {
+                key: this.gameState.players[key],
+                value: key
+              }
+            )
+          }
+        }
+        this.displaySettings.mahjongPlayer = -1
+        this.displaySettings.mahjong = true
+      },
+      mahjong () {
+        this.displaySettings.mahjong = false
+        this.gameState.mahjongCount++
+        const winner = this.displaySettings.mahjongPlayer
+        const currentRound = this.gameState.rounds.at(-1)
+        currentRound.inGame[winner] = false
+        currentRound.mahjongNumber[winner] = this.gameState.mahjongCount
+        if (this.gameState.mahjongCount === 3) {
+          this.displaySettings.roundInProggress = false
+        }
+      },
+      endOfWall () {
+        this.gameState.endOfWall = true
+        this.displaySettings.roundInProggress = false
       }
     }
   }
